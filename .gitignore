@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.azuredatastudio/
+
+# Environment
+.env
+venv/
+__pycache__/
+
+# Docker local noise (optional)
+*.log
