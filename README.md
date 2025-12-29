@@ -72,7 +72,7 @@ The environment is intentionally disposable and can be recreated at any time usi
 
 The SQL Server environment is defined using **Docker Compose**, replacing the one-off `docker run` approach used during initial setup.
 
-Docker Compose provides a **declarative and reproducible** environment definition.
+Docker Compose provides a **declarative and reproducible** environment definition. (Reference .yml file)
 
 Start SQL Server
 ```bash
