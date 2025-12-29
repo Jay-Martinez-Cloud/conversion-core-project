@@ -74,12 +74,12 @@ The SQL Server environment is defined using **Docker Compose**, replacing the on
 
 Docker Compose provides a **declarative and reproducible** environment definition.
 
-###Start SQL Server
+Start SQL Server
 ```bash
 docker compose up -d
 ```
 
-###StopSQL Server
+StopSQL Server
 ```bash
 docker compose down
 ```
