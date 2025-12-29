@@ -78,7 +78,7 @@ Docker Compose provides a **declarative and reproducible** environment definitio
 ```bash
 docker compose up -d
 
-docker compose down
+####docker compose down
 
 
 
