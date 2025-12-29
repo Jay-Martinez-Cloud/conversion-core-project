@@ -1,9 +1,13 @@
 # Conversion Core Project (SQL Server + T-SQL)
 
-All data, database names, and scenarios in this project are simulated for learning purposes.
+This project is for **educational and demonstration purposes only**.  
+No real client data, schemas, or proprietary logic are used.
 
+---
 
-This project simulates a real-world **data conversion** where legacy client data (Source_DB) is loaded into a fixed target schema (Template_DB) using **T-SQL** and **INSERT INTO ... SELECT** patterns.
+## Phase 1 – Core Conversion (T-SQL)
+
+This project simulates a real-world **data conversion** where legacy client data is loaded into a fixed target schema using **T-SQL** and `INSERT INTO ... SELECT` patterns.
 
 It mirrors common Conversion Engineer workflows:
 - Source data is messy and loosely constrained
@@ -14,18 +18,20 @@ It mirrors common Conversion Engineer workflows:
 ---
 
 ## Tech Stack
-- **SQL Server 2022** (running locally via Docker)
-- **T-SQL** (conversion logic)
-- **Azure Data Studio** (or VS Code) for query execution
-- **Git + GitHub** (version control)
+- **SQL Server 2022**
+- **T-SQL**
+- **Docker**
+- **Azure Data Studio** (or VS Code)
+- **Git & GitHub**
 
 ---
 
 ## Databases
 - `Client_Source_DB`  
   Simulates client legacy data (messy by design).
+
 - `Client_Template_DB`  
-  Simulates your company’s target schema (fixed structure).
+  Simulates a company-owned target schema with strict requirements.
 
 ---
 
@@ -35,11 +41,11 @@ Run these scripts **in order**:
 
 1. **01_CreateDBs.sql**
    - Creates `Client_Source_DB` and `Client_Template_DB`
-   - Drops them first if they already exist (local/dev reset)
+   - Drops existing databases first to allow clean local resets
 
 2. **02_Source_Permits.sql**
    - Creates `dbo.Legacy_Permits` in `Client_Source_DB`
-   - Inserts sample legacy data including bad data (NULL/blank PermitNo)
+   - Inserts sample legacy data including bad data (NULL and blank PermitNo)
 
 3. **03_Template_Permit_Setup.sql**
    - Creates `dbo.Permit` in `Client_Template_DB`
@@ -48,21 +54,26 @@ Run these scripts **in order**:
 4. **04_Template_Permit_Load.sql**
    - Loads data from Source → Template using `INSERT INTO ... SELECT`
    - Handles missing PermitNo by generating:
-     - `00-<ApplicantName>` (or `00-UNKNOWN`)
-   - Uses `NOT EXISTS` to prevent double-loading on re-run
-   - Includes validation queries (counts + data review)
+     - `00-<ApplicantName>` or `00-UNKNOWN`
+   - Designed to be safely re-run
+   - Includes validation queries (row counts and data review)
 
 ---
 
-## Docker SQL Server (Local Setup)
+## Docker SQL Server (Local Environment)
 
-Start SQL Server in Docker:
+SQL Server runs locally in Docker to provide an isolated development environment that does not depend on a host-installed database engine.
 
+The environment is intentionally disposable and can be recreated at any time using the provided scripts.
+
+---
+
+## Phase 2 – Docker Compose
+
+The SQL Server environment is defined using **Docker Compose**, replacing the one-off `docker run` approach used during initial setup.
+
+Docker Compose provides a **declarative and reproducible** environment definition.
+
+### Start SQL Server
 ```bash
-docker run -d \
-  --name sqlserver-dev \
-  -e "ACCEPT_EULA=Y" \
-  -e "MSSQL_SA_PASSWORD=<your-strong-password>" \
-  -p 1433:1433 \
-  -v mssql_data:/var/opt/mssql \
-  mcr.microsoft.com/mssql/server:2022-latest
+docker compose up -d

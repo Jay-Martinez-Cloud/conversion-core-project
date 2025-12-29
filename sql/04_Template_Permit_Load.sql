@@ -98,3 +98,5 @@ FROM dbo.Permit
 WHERE PermitNumber LIKE '00-%'
 ORDER BY PermitKey;
 GO
+
+

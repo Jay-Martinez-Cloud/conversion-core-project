@@ -49,3 +49,4 @@ GO
 
 --Optional: quick confirmation that the table exists
 -- SELECT TOP 0 * FROM dbo.Permit;
+
