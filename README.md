@@ -77,3 +77,6 @@ Docker Compose provides a **declarative and reproducible** environment definitio
 ### Start SQL Server
 ```bash
 docker compose up -d
+
+### Stop SQL Server
+docker compose down
