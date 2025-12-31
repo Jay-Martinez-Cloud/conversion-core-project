@@ -12,3 +12,8 @@ __pycache__/
 
 # Docker local noise (optional)
 *.log
+
+# Phase 3 artifacts (do not commit)
+backups/
+reports/
+*.bak
