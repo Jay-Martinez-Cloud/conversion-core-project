@@ -17,3 +17,10 @@ __pycache__/
 backups/
 reports/
 *.bak
+
+# Terraform (CRITICAL)
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
