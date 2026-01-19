@@ -24,3 +24,7 @@ reports/
 *.tfstate.*
 crash.log
 crash.*.log
+
+*.tfvars
+*.auto.tfvars
+secrets*.tfvars

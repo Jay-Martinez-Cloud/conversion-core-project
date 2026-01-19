@@ -15,3 +15,10 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+
+variable "mssql_sa_password" {
+  description = "SA password for SQL Server container (do not commit value)"
+  type        = string
+  sensitive   = true
+}
