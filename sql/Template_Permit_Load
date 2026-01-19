@@ -1,0 +1,109 @@
+/* =========================================================
+   04_Template_Permit_Load.sql
+   Purpose:
+     - Log rejects into EPL_Template_DB.dbo.Permit_Rejects
+     - Insert valid permits into EPL_Template_DB.dbo.Permit
+   Notes:
+     - Does NOT alter schemas
+     - Safe to re-run: uses NOT EXISTS to prevent duplicates
+   ========================================================= */
+
+-- 1) Log rejects
+INSERT INTO EPL_Template_DB.dbo.Permit_Rejects (LegacyPermitId, RawPermitNo, RejectReason)
+SELECT
+    s.LegacyPermitId,
+    s.PermitNo,
+    CASE
+        WHEN s.PermitNo IS NULL THEN 'PermitNo is NULL'
+        WHEN NULLIF(LTRIM(RTRIM(s.PermitNo)), '') IS NULL THEN 'PermitNo is blank/whitespace'
+        WHEN dups.PermitNo IS NOT NULL THEN 'Duplicate PermitNo in source'
+        WHEN EXISTS (
+            SELECT 1
+            FROM EPL_Template_DB.dbo.Permit p
+            WHERE p.PermitNo = LTRIM(RTRIM(s.PermitNo))
+        ) THEN 'PermitNo already exists in target'
+        ELSE 'Rejected (unspecified)'
+    END AS RejectReason
+FROM EPL_Source_DB.dbo.Legacy_Permits s
+LEFT JOIN (
+    SELECT LTRIM(RTRIM(PermitNo)) AS PermitNo
+    FROM EPL_Source_DB.dbo.Legacy_Permits
+    WHERE NULLIF(LTRIM(RTRIM(PermitNo)), '') IS NOT NULL
+    GROUP BY LTRIM(RTRIM(PermitNo))
+    HAVING COUNT(*) > 1
+) dups
+    ON dups.PermitNo = LTRIM(RTRIM(s.PermitNo))
+WHERE
+    -- only rows that should be rejected
+    s.PermitNo IS NULL
+    OR NULLIF(LTRIM(RTRIM(s.PermitNo)), '') IS NULL
+    OR dups.PermitNo IS NOT NULL
+    OR EXISTS (
+        SELECT 1
+        FROM EPL_Template_DB.dbo.Permit p
+        WHERE p.PermitNo = LTRIM(RTRIM(s.PermitNo))
+    )
+    -- prevent duplicate reject logging on reruns for same LegacyPermitId + reason
+    AND NOT EXISTS (
+        SELECT 1
+        FROM EPL_Template_DB.dbo.Permit_Rejects r
+        WHERE r.LegacyPermitId = s.LegacyPermitId
+          AND r.RejectReason = CASE
+                WHEN s.PermitNo IS NULL THEN 'PermitNo is NULL'
+                WHEN NULLIF(LTRIM(RTRIM(s.PermitNo)), '') IS NULL THEN 'PermitNo is blank/whitespace'
+                WHEN dups.PermitNo IS NOT NULL THEN 'Duplicate PermitNo in source'
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM EPL_Template_DB.dbo.Permit p
+                    WHERE p.PermitNo = LTRIM(RTRIM(s.PermitNo))
+                ) THEN 'PermitNo already exists in target'
+                ELSE 'Rejected (unspecified)'
+            END
+    );
+GO
+
+-- 2) Insert valid permits (accepted)
+INSERT INTO EPL_Template_DB.dbo.Permit (PermitNo, PermitType, ApplicantName)
+SELECT
+    LTRIM(RTRIM(s.PermitNo)) AS PermitNo,
+    s.PermitType,
+    s.ApplicantName
+FROM EPL_Source_DB.dbo.Legacy_Permits s
+WHERE
+    s.PermitNo IS NOT NULL
+    AND NULLIF(LTRIM(RTRIM(s.PermitNo)), '') IS NOT NULL
+    -- exclude source duplicates (keep none; force review)
+    AND NOT EXISTS (
+        SELECT 1
+        FROM (
+            SELECT LTRIM(RTRIM(PermitNo)) AS PermitNo
+            FROM EPL_Source_DB.dbo.Legacy_Permits
+            WHERE NULLIF(LTRIM(RTRIM(PermitNo)), '') IS NOT NULL
+            GROUP BY LTRIM(RTRIM(PermitNo))
+            HAVING COUNT(*) > 1
+        ) d
+        WHERE d.PermitNo = LTRIM(RTRIM(s.PermitNo))
+    )
+    -- prevent duplicates in target on rerun
+    AND NOT EXISTS (
+        SELECT 1
+        FROM EPL_Template_DB.dbo.Permit p
+        WHERE p.PermitNo = LTRIM(RTRIM(s.PermitNo))
+    );
+GO
+
+-- 3) Quick validation outputs
+SELECT COUNT(*) AS SourceRowCount
+FROM EPL_Source_DB.dbo.Legacy_Permits;
+
+SELECT COUNT(*) AS PermitRowCount
+FROM EPL_Template_DB.dbo.Permit;
+
+SELECT COUNT(*) AS RejectRowCount
+FROM EPL_Template_DB.dbo.Permit_Rejects;
+
+SELECT RejectReason, COUNT(*) AS Cnt
+FROM EPL_Template_DB.dbo.Permit_Rejects
+GROUP BY RejectReason
+ORDER BY Cnt DESC;
+GO

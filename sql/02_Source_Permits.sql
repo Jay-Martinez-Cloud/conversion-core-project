@@ -21,14 +21,19 @@
 USE Client_Source_DB;
 GO
 
+
 /* ---------------------------------------------------------
    Drop the legacy table if it already exists
    This allows the script to be re-run during development
    without manual cleanup.
    --------------------------------------------------------- */
+
 IF OBJECT_ID('dbo.Legacy_Permits','U') IS NOT NULL
     DROP TABLE dbo.Legacy_Permits;
 GO
+
+
+
 
 /* ---------------------------------------------------------
    Create the legacy permits table

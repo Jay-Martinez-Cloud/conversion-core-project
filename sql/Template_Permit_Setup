@@ -1,0 +1,47 @@
+/* =========================================================
+   03_Template_Permit_Setup.sql
+   Purpose:
+     - Create target tables in EPL_Template_DB:
+       dbo.Permit (accepted)
+       dbo.Permit_Rejects (rejected + reasons)
+   Safe to re-run (drops/recreates tables).
+   ========================================================= */
+
+USE EPL_Template_DB;
+GO
+
+IF OBJECT_ID('dbo.Permit_Rejects','U') IS NOT NULL
+    DROP TABLE dbo.Permit_Rejects;
+GO
+
+IF OBJECT_ID('dbo.Permit','U') IS NOT NULL
+    DROP TABLE dbo.Permit;
+GO
+
+CREATE TABLE dbo.Permit (
+    PermitId        INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    PermitNo        VARCHAR(50) NOT NULL,
+    PermitType      VARCHAR(30) NULL,
+    ApplicantName   VARCHAR(100) NULL,
+    CreatedAtUtc    DATETIME2(0) NOT NULL CONSTRAINT DF_Permit_CreatedAtUtc DEFAULT (SYSUTCDATETIME())
+);
+
+-- Enforce uniqueness in template
+CREATE UNIQUE INDEX UX_Permit_PermitNo
+ON dbo.Permit (PermitNo);
+GO
+
+CREATE TABLE dbo.Permit_Rejects (
+    RejectId        INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    LegacyPermitId  INT NULL,
+    RawPermitNo     VARCHAR(50) NULL,
+    RejectReason    VARCHAR(200) NOT NULL,
+    RejectedAtUtc   DATETIME2(0) NOT NULL CONSTRAINT DF_PermitRejects_RejectedAtUtc DEFAULT (SYSUTCDATETIME())
+);
+GO
+
+-- Verify
+SELECT name
+FROM sys.tables
+ORDER BY name;
+GO

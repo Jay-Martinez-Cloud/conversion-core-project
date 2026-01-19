@@ -5,11 +5,12 @@ No real client data, schemas, or proprietary logic are used.
 
 ---
 
-## Phase 1 – Core Conversion (T-SQL)
+## Phase 1 – Core Conversion (T-SQL) ******************************************************************************\*\*\*******************************************************************************
 
 This project simulates a real-world **data conversion** where legacy client data is loaded into a fixed target schema using **T-SQL** and `INSERT INTO ... SELECT` patterns.
 
 It mirrors common Conversion Engineer workflows:
+
 - Source data is messy and loosely constrained
 - Template schema is standardized and strict
 - Conversion logic handles basic data issues
@@ -18,6 +19,7 @@ It mirrors common Conversion Engineer workflows:
 ---
 
 ## Tech Stack
+
 - **SQL Server 2022**
 - **T-SQL**
 - **Docker**
@@ -27,6 +29,7 @@ It mirrors common Conversion Engineer workflows:
 ---
 
 ## Databases
+
 - `Client_Source_DB`  
   Simulates client legacy data (messy by design).
 
@@ -40,14 +43,17 @@ It mirrors common Conversion Engineer workflows:
 Run these scripts **in order**:
 
 1. **01_CreateDBs.sql**
+
    - Creates `Client_Source_DB` and `Client_Template_DB`
    - Drops existing databases first to allow clean local resets
 
 2. **02_Source_Permits.sql**
+
    - Creates `dbo.Legacy_Permits` in `Client_Source_DB`
    - Inserts sample legacy data including bad data (NULL and blank PermitNo)
 
 3. **03_Template_Permit_Setup.sql**
+
    - Creates `dbo.Permit` in `Client_Template_DB`
    - Setup-only script (run once per environment reset)
 
@@ -68,18 +74,60 @@ The environment is intentionally disposable and can be recreated at any time usi
 
 ---
 
-## Phase 2 – Docker Compose
+## Phase 2 – Docker Compose **********************************************************************************\***********************************************************************************
 
 The SQL Server environment is defined using **Docker Compose**, replacing the one-off `docker run` approach used during initial setup.
 
 Docker Compose provides a **declarative and reproducible** environment definition. (Reference `.yml` file)
 
 ### Start SQL Server
+
 ```
-docker compose up -d 
+docker compose up -d
 ```
 
 ### Stop SQL Server
+
 ```
 docker compose down
 ```
+
+## Phase 3a - AWS Deployment (Linux EC2 + Docker SQL Server) ****************************************************************\*\*\*****************************************************************
+
+### Infrastructure
+
+- Provisioned AWS infrastructure using Terraform:
+  - Custom VPC with public and private subnets
+  - Internet Gateway and NAT Gateway for private outbound access
+- Deployed an Amazon Linux EC2 instance in a private subnet
+- Installed Docker and ran SQL Server 2019 in a container
+- Configured IAM role and instance profile for Systems Manager access
+- Created an S3 bucket for conversion run artifacts
+
+### Security & Access
+
+- No public IP addresses on database host
+- No inbound SSH or RDP access
+- Secure access via AWS Systems Manager Session Manager
+- Database access through SSM port forwarding (`localhost:1433`)
+- Client connectivity using Azure Data Studio (macOS)
+
+### Execution
+
+- Infrastructure provisioned with Terraform
+- Secure port forwarding session established from local machine
+- Phase 1 SQL scripts executed unchanged against AWS-hosted SQL Server
+- Conversion results exported and uploaded to S3
+
+### Results
+
+- Source rows: **6**
+- Loaded permits: **2**
+- Rejected rows: **4**
+
+### Artifacts
+
+- Runtime artifacts generated and stored in Amazon S3:
+  - `row_counts.csv`
+  - `reject_reason_summary.csv`
+- Artifacts are intentionally excluded from source control
