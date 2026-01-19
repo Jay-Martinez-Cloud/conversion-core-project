@@ -5,7 +5,7 @@ No real client data, schemas, or proprietary logic are used.
 
 ---
 
-## Phase 1 – Core Conversion (T-SQL) ******************************************************************************\*\*\*******************************************************************************
+## Phase 1 – Core Conversion (T-SQL) ******************\*\*******************\*\*******************\*\*******************\*\*\*******************\*\*******************\*\*******************\*\*******************
 
 This project simulates a real-world **data conversion** where legacy client data is loaded into a fixed target schema using **T-SQL** and `INSERT INTO ... SELECT` patterns.
 
@@ -74,7 +74,7 @@ The environment is intentionally disposable and can be recreated at any time usi
 
 ---
 
-## Phase 2 – Docker Compose **********************************************************************************\***********************************************************************************
+## Phase 2 – Docker Compose ******************\*\*\*\*******************\*\*******************\*\*\*\*******************\*******************\*\*\*\*******************\*\*******************\*\*\*\*******************
 
 The SQL Server environment is defined using **Docker Compose**, replacing the one-off `docker run` approach used during initial setup.
 
@@ -92,7 +92,7 @@ docker compose up -d
 docker compose down
 ```
 
-## Phase 3a - AWS Deployment (Linux EC2 + Docker SQL Server) ****************************************************************\*\*\*****************************************************************
+## Phase 3a - AWS Deployment (Linux EC2 + Docker SQL Server) **************\*\***************\*\*\*\***************\*\***************\*\*\***************\*\***************\*\*\*\***************\*\***************
 
 ### Infrastructure
 
@@ -131,3 +131,84 @@ docker compose down
   - `row_counts.csv`
   - `reject_reason_summary.csv`
 - Artifacts are intentionally excluded from source control
+
+## Phase 3B – Observability & Lifecycle Management (CloudWatch + Cleanup) **************\*\***************\*\*\*\***************\*\***************\*\*\*********\*\*********\*********\*\*********
+
+Goal
+
+Add production-style monitoring and demonstrate safe infrastructure teardown.
+
+Observability
+
+Installed and configured the Amazon CloudWatch Agent
+
+Published host-level metrics to a custom namespace:
+EPLConversion/EC2
+
+CPU utilization
+
+Memory utilization
+
+Disk usage
+
+Attached least-privilege IAM permissions (CloudWatchAgentServerPolicy)
+
+Created CloudWatch alarms for:
+
+High CPU utilization
+
+High memory utilization
+
+High disk usage (root volume)
+
+Secure Operations
+
+EC2 instance remained private with no inbound access
+
+Access performed exclusively via AWS Systems Manager Session Manager
+
+Database connectivity maintained through SSM port forwarding
+
+Infrastructure Teardown & Cost Control
+
+Demonstrated safe teardown of all AWS resources using terraform destroy
+
+Identified and resolved S3 versioning blockers during destroy
+
+Programmatically deleted S3 object versions when required
+
+Added force_destroy = true to dev S3 buckets to prevent future teardown issues
+
+All AWS resources removed successfully, ensuring no ongoing cloud costs
+
+Key Skills Demonstrated
+
+SQL Server data conversion patterns
+
+Idempotent T-SQL design
+
+Dockerized database environments
+
+Terraform Infrastructure as Code
+
+Secure AWS networking (VPC, NAT, private subnets)
+
+IAM least-privilege policies
+
+AWS Systems Manager (SSM)
+
+CloudWatch metrics and alarms
+
+S3 artifact management
+
+Infrastructure lifecycle management and cost control
+
+Project Status
+
+Phase 1 – Core SQL Conversion ✅
+
+Phase 2 – Dockerized Environment ✅
+
+Phase 3A – AWS Deployment ✅
+
+Phase 3B – Observability & Teardown ✅
