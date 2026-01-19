@@ -3,11 +3,14 @@
 #######################################
 
 resource "aws_s3_bucket" "artifacts" {
-  bucket = "${var.project}-${var.environment}-artifacts-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${local.name_prefix}-artifacts-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
 
-  tags = merge(local.tags, {
-    Name = "${local.name_prefix}-artifacts"
-  })
+  tags = {
+    Name        = "${local.name_prefix}-artifacts"
+    Project     = "epl-conversion"
+    Environment = var.environment
+  }
 }
 
 # Who am I? (used to ensure bucket name uniqueness)
