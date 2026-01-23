@@ -8,7 +8,9 @@
 # Environment
 .env
 venv/
+.venv/
 __pycache__/
+
 
 # Docker local noise (optional)
 *.log
@@ -28,3 +30,7 @@ crash.*.log
 *.tfvars
 *.auto.tfvars
 secrets*.tfvars
+
+# Runtime outputs (do not commit)
+output/*
+!output/.gitkeep
