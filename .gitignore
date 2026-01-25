@@ -34,3 +34,6 @@ secrets*.tfvars
 # Runtime outputs (do not commit)
 output/*
 !output/.gitkeep
+
+python/.env
+runs/

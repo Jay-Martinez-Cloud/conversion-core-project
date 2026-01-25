@@ -1,4 +1,0 @@
-SELECT RejectReason, COUNT(*) AS CT
-FROM EPL_Template_DB.dbo.Permit_Rejects
-GROUP BY RejectReason
-ORDER BY CT  DESC 

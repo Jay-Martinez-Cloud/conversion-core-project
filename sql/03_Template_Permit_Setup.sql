@@ -1,52 +1,48 @@
 /* =========================================================
    Script: 03_Template_Permit_Setup.sql
    Purpose:
-     - Creates the target (Template) table that represents
-       your company's standardized schema.
-
-   This script represents:
-     - A "company-owned" schema that is fixed and controlled
-       by the product.
-     - In real client projects, this table typically already
-       exists (created by vendor tools / standard scripts).
+     - Creates the target (Template) tables that represent
+       your standardized schema + rejects table.
 
    Notes:
-     - This is a SETUP script (run once per environment reset).
-     - Do NOT include this in a rerunnable conversion load step
-       in production; dropping tables would destroy converted data.
+     - This is a SETUP script for local dev resets.
+     - In production, you normally would NOT drop tables.
    ========================================================= */
 
--- Switch context to the Template database
 USE Client_Template_DB;
 GO
 
 /* ---------------------------------------------------------
-   Drop the Permit table if it already exists
-   This is included ONLY to support local development resets.
-   It allows you to rerun setup scripts from a clean slate.
+   Dev reset: Drop tables if they already exist
    --------------------------------------------------------- */
-IF OBJECT_ID('dbo.Permit','U') IS NOT NULL
+IF OBJECT_ID('dbo.Permit', 'U') IS NOT NULL
     DROP TABLE dbo.Permit;
 GO
 
+IF OBJECT_ID('dbo.Permit_Rejects', 'U') IS NOT NULL
+    DROP TABLE dbo.Permit_Rejects;
+GO
+
 /* ---------------------------------------------------------
-   Create the Permit table (target schema)
-   Key design points:
-     - PermitKey: surrogate primary key (identity)
-       (common pattern in application databases)
-     - PermitNumber: required field in the target system
-     - LoadDtm: tracks when the record was inserted (audit)
+   Rejects table
    --------------------------------------------------------- */
-CREATE TABLE dbo.Permit (
-    PermitKey      INT IDENTITY(1,1) PRIMARY KEY,  -- internal unique row identifier
-    PermitNumber   VARCHAR(50)  NOT NULL,           -- business identifier (must be present)
-    PermitType     VARCHAR(30)  NOT NULL,           -- standardized category in target system
-    ApplicantName  VARCHAR(100) NOT NULL,           -- required in target system
-    LoadDtm        DATETIME2(0) NOT NULL DEFAULT SYSDATETIME() -- simple load audit timestamp
+CREATE TABLE dbo.Permit_Rejects (
+    RejectId      INT IDENTITY(1,1) PRIMARY KEY,
+    SourceKey     NVARCHAR(100) NULL,              -- optional "business key" from source
+    RejectReason  NVARCHAR(200) NOT NULL,
+    RejectDetail  NVARCHAR(4000) NULL,
+    CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
-
---Optional: quick confirmation that the table exists
--- SELECT TOP 0 * FROM dbo.Permit;
-
+/* ---------------------------------------------------------
+   Target Permit table
+   --------------------------------------------------------- */
+CREATE TABLE dbo.Permit (
+    PermitKey      INT IDENTITY(1,1) PRIMARY KEY,
+    PermitNumber   VARCHAR(50)  NOT NULL,
+    PermitType     VARCHAR(30)  NOT NULL,
+    ApplicantName  VARCHAR(100) NOT NULL,
+    LoadDtm        DATETIME2(0) NOT NULL DEFAULT SYSDATETIME()
+);
+GO

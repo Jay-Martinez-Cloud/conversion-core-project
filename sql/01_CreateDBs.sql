@@ -9,10 +9,9 @@
      - Client_Template_DB → simulates the target application schema
 
    Notes:
-     - This script is intended for LOCAL DEVELOPMENT ONLY
-     - It is safe to re-run because it conditionally drops databases
-     - In real client projects, databases already exist and
-       this script would typically NOT be run by the conversion engineer
+     - LOCAL DEVELOPMENT ONLY
+     - Safe to re-run: conditionally drops and recreates DBs
+     - Uses SINGLE_USER + ROLLBACK IMMEDIATE to disconnect sessions
    ========================================================= */
 
 -- Always start from the system database when creating/dropping databases
@@ -20,31 +19,37 @@ USE master;
 GO
 
 /* ---------------------------------------------------------
-   Drop Source database if it already exists
-   This ensures a clean slate so the script can be re-run
-   without manual cleanup. This is for repeatability in a sandbox environment.
+   Drop Source / Template databases if they already exist
+   Force disconnect active sessions (dev reset only)
    --------------------------------------------------------- */
+
 IF DB_ID('Client_Source_DB') IS NOT NULL
+BEGIN
+    ALTER DATABASE Client_Source_DB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE Client_Source_DB;
+END
+GO
 
 IF DB_ID('Client_Template_DB') IS NOT NULL
+BEGIN
+    ALTER DATABASE Client_Template_DB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE Client_Template_DB;
+END
 GO
 
 /* ---------------------------------------------------------
    Create the Source database
-   This database represents the client's legacy system
    --------------------------------------------------------- */
 CREATE DATABASE Client_Source_DB;
+GO
 
 /* ---------------------------------------------------------
    Create the Template database
-   This database represents the target application schema
    --------------------------------------------------------- */
 CREATE DATABASE Client_Template_DB;
 GO
 
---Uncomment if you want to confirm databases were created
+-- Optional: confirm databases were created
 -- SELECT name
 -- FROM sys.databases
 -- WHERE name IN ('Client_Source_DB', 'Client_Template_DB');

@@ -1,4 +1,0 @@
-SELECT
-  (SELECT COUNT(*) FROM EPL_Source_DB.dbo.Legacy_Permits) AS SourceRowCount,
-  (SELECT COUNT(*) FROM EPL_Template_DB.dbo.Permit) AS PermitRowCount,
-  (SELECT COUNT(*) FROM EPL_Template_DB.dbo.Permit_Rejects) AS RejectRowCount;
