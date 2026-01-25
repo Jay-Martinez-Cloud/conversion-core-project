@@ -1,207 +1,237 @@
-# Conversion Core Project (SQL Server + T-SQL)
+Conversion Core Project
 
-This project is for **educational and demonstration purposes only**.  
+SQL Server · T-SQL · Docker · Python · Terraform · AWS
+
+Educational and demonstration project only.
 No real client data, schemas, or proprietary logic are used.
 
----
+This repository demonstrates a realistic, end-to-end data conversion pipeline, starting from raw T-SQL conversion logic and evolving into a cloud-ready, Python-orchestrated, observable system.
 
-## Phase 1 – Core Conversion (T-SQL) ******************\*\*******************\*\*******************\*\*******************\*\*\*******************\*\*******************\*\*******************\*\*******************
+The project mirrors how conversion work is actually performed in professional environments:
 
-This project simulates a real-world **data conversion** where legacy client data is loaded into a fixed target schema using **T-SQL** and `INSERT INTO ... SELECT` patterns.
+SQL does the data work
 
-It mirrors common Conversion Engineer workflows:
+Python orchestrates execution and reporting
 
-- Source data is messy and loosely constrained
-- Template schema is standardized and strict
-- Conversion logic handles basic data issues
-- Load scripts are safe to re-run (idempotent)
+Infrastructure is disposable, reproducible, and secure
 
----
+What This Project Demonstrates
 
-## Tech Stack
+Real-world T-SQL data conversion patterns
 
-- **SQL Server 2022**
-- **T-SQL**
-- **Docker**
-- **Azure Data Studio** (or VS Code)
-- **Git & GitHub**
+Safe, idempotent SQL script design
 
----
+Python orchestration that controls SQL without replacing it
 
-## Databases
+Dockerized SQL Server environments
 
-- `Client_Source_DB`  
-  Simulates client legacy data (messy by design).
+AWS infrastructure built and destroyed with Terraform
 
-- `Client_Template_DB`  
-  Simulates a company-owned target schema with strict requirements.
+Secure, private cloud networking (no public DB access)
 
----
+Operational hygiene (metrics, rejects, artifacts, cleanup)
 
-## Scripts and Run Order
+Tech Stack
 
-Run these scripts **in order**:
+SQL Server 2022
 
-1. **01_CreateDBs.sql**
+T-SQL
 
-   - Creates `Client_Source_DB` and `Client_Template_DB`
-   - Drops existing databases first to allow clean local resets
+Python 3
 
-2. **02_Source_Permits.sql**
+Docker & Docker Compose
 
-   - Creates `dbo.Legacy_Permits` in `Client_Source_DB`
-   - Inserts sample legacy data including bad data (NULL and blank PermitNo)
+Terraform
 
-3. **03_Template_Permit_Setup.sql**
+AWS (EC2, VPC, S3, CloudWatch, SSM)
 
-   - Creates `dbo.Permit` in `Client_Template_DB`
-   - Setup-only script (run once per environment reset)
+Azure Data Studio
 
-4. **04_Template_Permit_Load.sql**
-   - Loads data from Source → Template using `INSERT INTO ... SELECT`
-   - Handles missing PermitNo by generating:
-     - `00-<ApplicantName>` or `00-UNKNOWN`
-   - Designed to be safely re-run
-   - Includes validation queries (row counts and data review)
+Git & GitHub
 
----
+Databases
 
-## Docker SQL Server (Local Environment)
+Client_Source_DB
+Simulates legacy client data (intentionally messy).
 
-SQL Server runs locally in Docker to provide an isolated development environment that does not depend on a host-installed database engine.
+Client_Template_DB
+Simulates a company-owned target schema with strict requirements.
 
-The environment is intentionally disposable and can be recreated at any time using the provided scripts.
+Phase 1 – Core Conversion (T-SQL)
 
----
+This phase simulates a classic data conversion using pure T-SQL.
 
-## Phase 2 – Docker Compose ******************\*\*\*\*******************\*\*******************\*\*\*\*******************\*******************\*\*\*\*******************\*\*******************\*\*\*\*******************
+Key characteristics:
 
-The SQL Server environment is defined using **Docker Compose**, replacing the one-off `docker run` approach used during initial setup.
+Source data is loosely constrained
 
-Docker Compose provides a **declarative and reproducible** environment definition. (Reference `.yml` file)
+Target schema is fixed and strict
 
-### Start SQL Server
+Conversion logic handles bad data
 
-```
+Scripts are safe to re-run
+
+SQL Script Run Order
+
+01_CreateDBs.sql
+
+Drops and recreates Source and Template databases
+
+Intended for local/dev resets only
+
+02_Source_Permits.sql
+
+Creates dbo.Legacy_Permits
+
+Inserts intentionally bad legacy data
+
+03_Template_Permit_Setup.sql
+
+Creates target tables (Permit, Permit_Rejects)
+
+Setup-only script
+
+04_Template_Permit_Load.sql
+
+Loads Source → Template using INSERT INTO … SELECT
+
+Generates PermitNumber when missing
+
+Routes invalid rows to Permit_Rejects
+
+Designed to be idempotent
+
+Phase 2 – Dockerized SQL Server
+
+SQL Server runs locally in Docker to provide an isolated, disposable environment.
+
+Start SQL Server
 docker compose up -d
-```
 
-### Stop SQL Server
-
-```
+Stop SQL Server
 docker compose down
-```
 
-## Phase 3a - AWS Deployment (Linux EC2 + Docker SQL Server) **************\*\***************\*\*\*\***************\*\***************\*\*\***************\*\***************\*\*\*\***************\*\***************
+The environment can be destroyed and recreated at any time.
 
-### Infrastructure
+Phase 3A – AWS Deployment (EC2 + Docker SQL Server)
+Infrastructure
 
-- Provisioned AWS infrastructure using Terraform:
-  - Custom VPC with public and private subnets
-  - Internet Gateway and NAT Gateway for private outbound access
-- Deployed an Amazon Linux EC2 instance in a private subnet
-- Installed Docker and ran SQL Server 2019 in a container
-- Configured IAM role and instance profile for Systems Manager access
-- Created an S3 bucket for conversion run artifacts
+Terraform-provisioned AWS environment:
 
-### Security & Access
+Custom VPC with public + private subnets
 
-- No public IP addresses on database host
-- No inbound SSH or RDP access
-- Secure access via AWS Systems Manager Session Manager
-- Database access through SSM port forwarding (`localhost:1433`)
-- Client connectivity using Azure Data Studio (macOS)
+NAT Gateway for outbound access
 
-### Execution
+Amazon Linux EC2 in a private subnet
 
-- Infrastructure provisioned with Terraform
-- Secure port forwarding session established from local machine
-- Phase 1 SQL scripts executed unchanged against AWS-hosted SQL Server
-- Conversion results exported and uploaded to S3
+SQL Server running in Docker on EC2
 
-### Results
+S3 bucket for conversion artifacts
 
-- Source rows: **6**
-- Loaded permits: **2**
-- Rejected rows: **4**
+Security & Access
 
-### Artifacts
+No public IPs on the database host
 
-- Runtime artifacts generated and stored in Amazon S3:
-  - `row_counts.csv`
-  - `reject_reason_summary.csv`
-- Artifacts are intentionally excluded from source control
+No SSH or RDP
 
-## Phase 3B – Observability & Lifecycle Management (CloudWatch + Cleanup) **************\*\***************\*\*\*\***************\*\***************\*\*\*********\*\*********\*********\*\*********
+Access via AWS Systems Manager Session Manager
 
-Goal
+Database access via SSM port forwarding (localhost:1433)
 
-Add production-style monitoring and demonstrate safe infrastructure teardown.
+Execution
 
+Phase 1 SQL scripts executed unchanged against AWS SQL Server
+
+Artifacts exported and uploaded to S3
+
+Results
+
+Source rows: 6
+
+Loaded permits: 2
+
+Rejected rows: 4
+
+Phase 3B – Observability & Lifecycle Management
 Observability
 
-Installed and configured the Amazon CloudWatch Agent
+CloudWatch Agent installed on EC2
 
-Published host-level metrics to a custom namespace:
-EPLConversion/EC2
+Custom namespace: EPLConversion/EC2
 
-CPU utilization
+Metrics:
 
-Memory utilization
+CPU
+
+Memory
 
 Disk usage
 
-Attached least-privilege IAM permissions (CloudWatchAgentServerPolicy)
-
-Created CloudWatch alarms for:
-
-High CPU utilization
-
-High memory utilization
-
-High disk usage (root volume)
+CloudWatch alarms configured
 
 Secure Operations
 
-EC2 instance remained private with no inbound access
+Private EC2 instance
 
-Access performed exclusively via AWS Systems Manager Session Manager
+Access exclusively via SSM
 
-Database connectivity maintained through SSM port forwarding
+No inbound access rules
 
-Infrastructure Teardown & Cost Control
+Teardown & Cost Control
 
-Demonstrated safe teardown of all AWS resources using terraform destroy
+Full teardown via terraform destroy
 
-Identified and resolved S3 versioning blockers during destroy
+S3 versioning blockers resolved
 
-Programmatically deleted S3 object versions when required
+force_destroy = true added for dev buckets
 
-Added force_destroy = true to dev S3 buckets to prevent future teardown issues
+Zero residual cloud resources
 
-All AWS resources removed successfully, ensuring no ongoing cloud costs
+Phase 4 – Python Orchestration Layer ⭐
 
-Key Skills Demonstrated
+This phase introduces Python as the automation layer, without replacing SQL.
 
-SQL Server data conversion patterns
+Design Principle
 
-Idempotent T-SQL design
+SQL performs data operations.
+Python controls execution, logging, and reporting.
 
-Dockerized database environments
+What Python Does
 
-Terraform Infrastructure as Code
+Executes numbered SQL scripts in order
 
-Secure AWS networking (VPC, NAT, private subnets)
+Handles admin vs transactional scripts
 
-IAM least-privilege policies
+Tracks execution timing and row counts
 
-AWS Systems Manager (SSM)
+Stops pipeline on failure
 
-CloudWatch metrics and alarms
+Generates run artifacts:
 
-S3 artifact management
+step_results.csv
 
-Infrastructure lifecycle management and cost control
+row_counts.csv
+
+reject_reason_summary.csv
+
+Writes structured run metadata (run_summary.json)
+
+Key Files
+python/
+├── db.py # SQL Server connection + execution helpers
+├── run_conversion.py # Orchestrates the entire pipeline
+├── reports.py # CSV report writers
+
+Run the Full Pipeline
+python -m python.run_conversion
+
+Security
+
+No secrets committed
+
+All credentials sourced from environment variables
+
+.env, Terraform state, and run artifacts are git-ignored
 
 Project Status
 
@@ -212,3 +242,10 @@ Phase 2 – Dockerized Environment ✅
 Phase 3A – AWS Deployment ✅
 
 Phase 3B – Observability & Teardown ✅
+
+Phase 4 – Python Orchestration ✅
+
+Notes
+
+This project is intentionally designed to resemble real conversion engineering work, not toy examples.
+It emphasizes correctness, safety, and operational awareness over shortcuts.
