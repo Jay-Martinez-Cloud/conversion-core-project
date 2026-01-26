@@ -2,7 +2,9 @@ import csv
 import json
 from datetime import datetime
 from pathlib import Path
+import os
 
+from .artifacts import upload_run_dir
 from .db import (
     get_connection,
     execute_sql_file,
@@ -27,7 +29,8 @@ def ensure_run_dir(base_dir: Path):
 
 def write_step_results_csv(run_dir: Path, results: list[dict]):
     out = run_dir / "step_results.csv"
-    fields = ["file", "status", "duration_ms", "rows_affected", "error", "path"]
+    fields = ["file", "status", "duration_ms",
+              "rows_affected", "error", "path"]
     with open(out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -73,7 +76,10 @@ def main():
     for script in scripts:
         print(f"\n▶ Running {script.name} ...")
 
-        is_db_admin_step = script.name in {"01_CreateDBs.sql", "EPL_CreateDBs.sql"}
+        is_db_admin_step = script.name in {
+            "01_CreateDBs.sql",
+            "EPL_CreateDBs.sql",
+        }
 
         if is_db_admin_step:
             print("   (using autocommit admin connection)")
@@ -127,7 +133,8 @@ def main():
 
             if reject_summary_sql.exists():
                 cols, rows = fetch_from_sql_file(conn, str(reject_summary_sql))
-                write_query_to_csv(run_dir / "reject_reason_summary.csv", cols, rows)
+                write_query_to_csv(
+                    run_dir / "reject_reason_summary.csv", cols, rows)
                 print("📊 Wrote reject_reason_summary.csv")
 
         except Exception as e:
@@ -146,6 +153,27 @@ def main():
     print(" -", summary["outputs"]["run_summary_json"])
     print(" -", summary["outputs"]["row_counts_csv"])
     print(" -", summary["outputs"]["reject_reason_summary_csv"])
+
+    # -------------------------
+    # 4) Upload artifacts to S3 (optional)
+    # -------------------------
+    bucket = os.getenv("ARTIFACTS_BUCKET")
+    env = os.getenv("ENV", "dev")
+
+    if bucket:
+        try:
+            uploaded = upload_run_dir(
+                run_dir=run_dir,
+                bucket=bucket,
+                env=env,
+                run_id=run_id
+            )
+            print(
+                f"☁️ Uploaded {uploaded} artifacts to s3://{bucket}/runs/{env}/{run_id}/")
+        except Exception as e:
+            print(f"⚠️ S3 upload failed: {e}")
+    else:
+        print("☁️ ARTIFACTS_BUCKET not set; skipping S3 upload.")
 
 
 if __name__ == "__main__":
