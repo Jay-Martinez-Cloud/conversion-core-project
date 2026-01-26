@@ -5,35 +5,29 @@
 .vscode/
 .azuredatastudio/
 
-# Environment
+# Python / Environment
 .env
 venv/
 .venv/
 __pycache__/
+python/.env
 
-
-# Docker local noise (optional)
+# Docker / runtime noise
 *.log
 
-# Phase 3 artifacts (do not commit)
+# Conversion artifacts (generated)
 backups/
 reports/
-*.bak
+runs/
+output/*
+!output/.gitkeep
 
 # Terraform (CRITICAL)
 **/.terraform/*
 *.tfstate
 *.tfstate.*
-crash.log
-crash.*.log
-
 *.tfvars
 *.auto.tfvars
 secrets*.tfvars
-
-# Runtime outputs (do not commit)
-output/*
-!output/.gitkeep
-
-python/.env
-runs/
+crash.log
+crash.*.log

@@ -1,0 +1,9 @@
+# Copy this file to terraform.tfvars (do NOT commit terraform.tfvars)
+# Example:
+#   cp terraform.tfvars.example terraform.tfvars
+
+project_name    = "conversion-core"
+env             = "dev"
+
+# SQL Server SA password (store only in terraform.tfvars, never commit)
+sql_sa_password = "REPLACE_ME"
